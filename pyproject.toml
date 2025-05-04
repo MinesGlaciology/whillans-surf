@@ -1,0 +1,21 @@
+[project]
+name = "whillans-surf"
+version = "0.1.0"
+description = "Repository for the Whillans ML SURF project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2.3",
+    "pyproj>=3.7.1",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["whillans_surf", "util"]
