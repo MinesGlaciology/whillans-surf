@@ -1,0 +1,25 @@
+Features created:
+    Slip severity (impulsivity)(
+    pre-slip area
+    days since last event
+    tide height
+
+
+Things to Predict:
+    large vs small total slip (see station graphing function)
+
+
+
+
+Maybe make a station function
+
+station:
+
+    get tide data()
+
+    get x_cor
+    get y_cor
+
+    get_average(___)
+
+    
