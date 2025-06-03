@@ -22,4 +22,19 @@ station:
 
     get_average(___)
 
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+Learned:
+    Scipy Signal
+    Line profiling %load_ext line_profiler

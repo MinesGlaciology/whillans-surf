@@ -137,6 +137,19 @@ def preprocess_events(raw_events, var='x'):
     return processed_events
 
 def load_evt(evts_path):
+    """
+    Load the events into a list of data frames
+
+    Parameters
+    ----------
+    evts_path: File path to evts files
+
+    Returns
+    -------
+    List[pandas DataFrame]
+        Raw Data
+    
+    """
     events_list = [] 
 
     for evt_path in os.listdir(evts_path):
