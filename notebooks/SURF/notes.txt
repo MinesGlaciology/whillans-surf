@@ -11,7 +11,7 @@ Things to Predict:
 
 
 
-Maybe make a station function
+Maybe make a station class
 
 station:
 
