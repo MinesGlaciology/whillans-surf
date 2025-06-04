@@ -250,6 +250,7 @@ def plot_event(event: pd.DataFrame, separated=False, var="x") -> None:
 
 def get_tide_data(events_list, station, days = 30, spacing = 10, plot = False):
     
+        
     # Identify station columns names
     x_col = f"{station}x"
     y_col = f"{station}y"
