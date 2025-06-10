@@ -1,26 +1,16 @@
 Features created:
-    Slip severity (impulsivity)(
+    Slip severity (impulsivity)
     pre-slip area
     days since last event
     tide height
+    tide form factor (calculated over 30 days)
+    
 
 
 Things to Predict:
     large vs small total slip (see station graphing function)
 
 
-
-
-Maybe make a station class
-
-station:
-
-    get tide data()
-
-    get x_cor
-    get y_cor
-
-    get_average(___)
 
 
 

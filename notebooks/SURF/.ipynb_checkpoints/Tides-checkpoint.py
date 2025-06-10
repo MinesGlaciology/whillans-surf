@@ -44,7 +44,7 @@ class Tide:
         self.model_loc = model_loc
 
     def tidal_elevation(
-        self, model, constituents, lons: list, lats: list, datetimes: list, consts=None
+        self, lons: list, lats: list, datetimes: list, consts=None
     ) -> xr.DataArray:
         """
         Calculate the tidal elevation at the given locations and times. Adapted
@@ -82,14 +82,14 @@ class Tide:
         )
         
         # Setup model
-        # model = pyTMD.io.model(self.model_loc, format="netcdf").elevation(self.model)
-        # constituents = pyTMD.io.OTIS.read_constants(
-        #     model.grid_file,
-        #     model.model_file,
-        #     model.projection,
-        #     type=model.type,
-        #     grid=model.format,
-        # )
+        model = pyTMD.io.model(self.model_loc, format="netcdf").elevation(self.model)
+        constituents = pyTMD.io.OTIS.read_constants(
+            model.grid_file,
+            model.model_file,
+            model.projection,
+            type=model.type,
+            grid=model.format,
+        )
         c = constituents.fields
 
         DELTAT = np.zeros_like(tide_time)

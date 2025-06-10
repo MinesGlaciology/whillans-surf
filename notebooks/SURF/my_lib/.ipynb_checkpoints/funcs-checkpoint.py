@@ -5,6 +5,10 @@ import scipy.signal
 import math
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import datetime
+
+import Tides
+import util.coordinate_transforms 
 
 def extract_event_features(events_list, var='x'):
     """
@@ -18,7 +22,7 @@ def extract_event_features(events_list, var='x'):
     Returns:
         new_features (list of DataFrames): One DataFrame per event with features per station.
     """
-    # Columns for the features DataFrame
+    # Columns for the features DataFrames
     columns = ["station", "pre-slip_area", "slip_severity", "peak_time", "total_delta", "start_time"]
     
     # Preprocess events, extract displacement
@@ -105,6 +109,8 @@ def preprocess_events(raw_events, var='x'):
         - Only columns ending in `var` and 'time_sec' are retained.
         - Calculate displacement relative to the start of the event
         - Start time of event
+        - x cor
+        - y cor
     """
     
     processed_events = [] 
@@ -135,6 +141,19 @@ def preprocess_events(raw_events, var='x'):
     return processed_events
 
 def load_evt(evts_path):
+    """
+    Load the events into a list of data frames
+
+    Parameters
+    ----------
+    evts_path: File path to evts files
+
+    Returns
+    -------
+    List[pandas DataFrame]
+        Raw Data
+    
+    """
     events_list = [] 
 
     for evt_path in os.listdir(evts_path):
@@ -230,3 +249,71 @@ def plot_event(event: pd.DataFrame, separated=False, var="x") -> None:
         fig.suptitle(f"{var.upper()} Displacement per Station", fontsize=14)
         plt.tight_layout(rect=[0, 0, 1, 0.95])
         plt.show()
+
+
+
+def get_tide_data(events_list, station, days = 30, spacing = 10, plot = False):
+    
+        
+    # Identify station columns names
+    x_col = f"{station}x"
+    y_col = f"{station}y"
+    
+    # loop through events to get first instance station is transmitting
+    for i, event in enumerate(events_list):
+        if not event[x_col].isna().any():# make sure location is transmitting
+            # get first instance of coordinates
+            x_cor = event.at[0, x_col] 
+            y_cor = event.at[0,y_col]
+            print(x_cor, y_cor)
+            start_time = event.at[0, 'time']
+            start_time_dt = datetime.datetime.fromisoformat(start_time)  # if ISO format
+            start_time = str(datetime.datetime(start_time_dt.year, 1, 1))
+            break
+
+   
+    # print(x_cor, y_cor, start_time)
+    # now we need to get tidal data
+    ### USER DEFINED PATH TO TIDE MODEL ###
+    tide_dir = "/Users/sambrown04/Documents/SURF"
+    #######################################
+
+    tide_mod = "CATS2008-v2023"
+    
+    HR_PER_DAY = 24
+    MIN_PER_HR = 60
+
+    # create time series data
+    dates_timeseries = []
+    initial_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    for i in range(days * HR_PER_DAY * MIN_PER_HR // spacing):  # 30 days * 24 hr/day * 60 min/hr * 1/10 calculations/min
+        dates_timeseries.append(initial_time + datetime.timedelta(minutes=spacing * i))
+
+    #convert to lon and lat
+    lon, lat = util.coordinate_transforms.xy2ll(x_cor, y_cor)
+    print(lon, lat)
+    
+    tides = Tides.Tide(tide_mod, tide_dir)
+    tide_results = tides.tidal_elevation(
+        [lon],
+        [lat],
+        dates_timeseries,
+    ).data.T[0]
+
+    if plot:
+        fig, ax = plt.subplots(figsize = (10,5))
+        ax.plot(dates_timeseries, tide_results, label = f"Station {station}")
+        plt.legend()
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Tide Height [cm]")
+        plt.show()
+
+    # print(len(dates_timeseries))
+    # print(len(tide_results))
+    
+    out = pd.DataFrame(columns = ["time", "tide_height"])
+    out.loc[:,"time"] = dates_timeseries
+    out.loc[:,"tide_height"] = tide_results
+
+    return out
+        

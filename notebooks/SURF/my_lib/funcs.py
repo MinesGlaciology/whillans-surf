@@ -5,6 +5,10 @@ import scipy.signal
 import math
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import datetime
+
+import Tides
+import util.coordinate_transforms 
 
 def extract_event_features(events_list, var='x'):
     """
@@ -263,6 +267,8 @@ def get_tide_data(events_list, station, days = 30, spacing = 10, plot = False):
             y_cor = event.at[0,y_col]
             print(x_cor, y_cor)
             start_time = event.at[0, 'time']
+            start_time_dt = datetime.datetime.fromisoformat(start_time)  # if ISO format
+            start_time = str(datetime.datetime(start_time_dt.year, 1, 1))
             break
 
    
