@@ -13,4 +13,4 @@ wheels/
 *.pdf
 
 #seismograms
-./Seismic/data
+./notebooks/Seismic/data
