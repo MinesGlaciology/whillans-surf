@@ -6,6 +6,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import datetime
+import time
 
 import Tides
 import util.coordinate_transforms 
@@ -251,39 +252,39 @@ def plot_event(event: pd.DataFrame, separated=False, var="x") -> None:
         plt.show()
 
 
+def get_tide_height(days, x_cor, y_cor, start_time):
+    """ Get tide height for <days> days from initial date <start_time>, at the coordinates <x_cor> and <y_cor>.
 
-def get_tide_data(events_list, station, days = 30, spacing = 10, plot = False):
-    
-        
-    # Identify station columns names
-    x_col = f"{station}x"
-    y_col = f"{station}y"
-    
-    # loop through events to get first instance station is transmitting
-    for i, event in enumerate(events_list):
-        if not event[x_col].isna().any():# make sure location is transmitting
-            # get first instance of coordinates
-            x_cor = event.at[0, x_col] 
-            y_cor = event.at[0,y_col]
-            print(x_cor, y_cor)
-            start_time = event.at[0, 'time']
-            start_time_dt = datetime.datetime.fromisoformat(start_time)  # if ISO format
-            start_time = str(datetime.datetime(start_time_dt.year, 1, 1))
-            break
+    Parameters
+    ----------
+    days : int
+        Number of days to calculate tide height for.
+    x_cor : float
+        PS71 x coordinate of tide calculation
+    y_cor : _type_
+        PS71 y coordinate of tide calculation
+    start_time : _type_
+        Starting date in %Y-%m-%d %H:%M:%S format
 
-   
-    # print(x_cor, y_cor, start_time)
-    # now we need to get tidal data
+    Returns
+    -------
+    list[float]
+        Tide heights
+    """
+
     ### USER DEFINED PATH TO TIDE MODEL ###
     tide_dir = "/Users/sambrown04/Documents/SURF"
     #######################################
-
+    
     tide_mod = "CATS2008-v2023"
     
+    tides = Tides.Tide(tide_mod, tide_dir)
+    
+    spacing = 1 # every minute
+
     HR_PER_DAY = 24
     MIN_PER_HR = 60
 
-    # create time series data
     dates_timeseries = []
     initial_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     for i in range(days * HR_PER_DAY * MIN_PER_HR // spacing):  # 30 days * 24 hr/day * 60 min/hr * 1/10 calculations/min
@@ -291,29 +292,25 @@ def get_tide_data(events_list, station, days = 30, spacing = 10, plot = False):
 
     #convert to lon and lat
     lon, lat = util.coordinate_transforms.xy2ll(x_cor, y_cor)
-    print(lon, lat)
+    # print(lon, lat)
+
     
     tides = Tides.Tide(tide_mod, tide_dir)
+    
+    start_time = time.time()
     tide_results = tides.tidal_elevation(
         [lon],
         [lat],
         dates_timeseries,
     ).data.T[0]
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Elapsed time: {elapsed_time} seconds")
 
-    if plot:
-        fig, ax = plt.subplots(figsize = (10,5))
-        ax.plot(dates_timeseries, tide_results, label = f"Station {station}")
-        plt.legend()
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Tide Height [cm]")
-        plt.show()
-
-    # print(len(dates_timeseries))
-    # print(len(tide_results))
     
     out = pd.DataFrame(columns = ["time", "tide_height"])
     out.loc[:,"time"] = dates_timeseries
     out.loc[:,"tide_height"] = tide_results
 
     return out
-        
+    

@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
+import statistics
 
 from Tides import Tide
 import util.coordinate_transforms 
@@ -24,11 +25,11 @@ class Station:
 
         self.data = self.preprocess()
 
-        self.pre_slip_a = self.calc_area()
+        self.pre_slip_a, self.pre_slip_a_sd = self.calc_area()
     
-        self.slip_severity = self.calc_avg_sv()
+        self.slip_severity, self.slip_severity_sd = self.calc_avg_sv()
 
-        self.slip_size = self.calc_avg_sz()
+        self.slip_size, self.slip_size_sd = self.calc_avg_sz()
         
         self.tide_dat = self.get_tide_data()
       
@@ -120,7 +121,7 @@ class Station:
 
                 slip_sizes.append(integral)
                 
-        return sum(slip_sizes) / len(slip_sizes)
+        return sum(slip_sizes) / len(slip_sizes), statistics.stdev(slip_sizes)
     
     def calc_avg_sv(self, var = 'x'):
         """
@@ -148,7 +149,7 @@ class Station:
 
                 impulsive_list.append(severity)
 
-        return sum(impulsive_list) / len(impulsive_list)
+        return sum(impulsive_list) / len(impulsive_list), statistics.stdev(impulsive_list)
                 
         
         
@@ -159,7 +160,7 @@ class Station:
                 disp = event.iloc[-1][f'{self.name}{var}']
                 displacements.append(disp)
 
-        return sum(displacements) / len(displacements)
+        return sum(displacements) / len(displacements), statistics.stdev(impulsive_list)
 
         
     def plot_station(self, var='x'):
@@ -240,7 +241,7 @@ class Station:
         return out
         
 
-    def scaling_metrics(self):
+
         
 
 

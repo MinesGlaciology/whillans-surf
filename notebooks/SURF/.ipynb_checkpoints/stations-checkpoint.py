@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
+import statistics
 
 from Tides import Tide
 import util.coordinate_transforms 
@@ -24,11 +25,11 @@ class Station:
 
         self.data = self.preprocess()
 
-        self.pre_slip_a = self.calc_area()
+        self.pre_slip_a, self.pre_slip_a_sd = self.calc_area()
     
-        self.slip_severity = self.calc_avg_sv()
+        self.slip_severity, self.slip_severity_sd = self.calc_avg_sv()
 
-        self.slip_size = self.calc_avg_sz()
+        self.slip_size, self.slip_size_sd = self.calc_avg_sz()
         
         self.tide_dat = self.get_tide_data()
       
@@ -39,7 +40,8 @@ class Station:
 
         Returns
         -------
-        A list of DataFrames with columns for x, y, z, and displacements standardized. If the station is not operational for event, returns empty DF with column 'no_event'
+        A list of DataFrames with columns for x, y, z, and displacements standardized. If the station is not operational for event, returns empty DF with column 
+        'no_event'
         
         """
         
@@ -106,12 +108,12 @@ class Station:
                 grad = my_lib.funcs.derivative(event[f'{self.name}{var}'])
                 grad2 = my_lib.funcs.derivative(grad)
 
-                # Identify the peak in the second derivative (maximum acceleration)
+                # Identify the peak in the second derivative (Sharpest break in signal)
                 max_idx = np.argmax(np.abs(grad2))
                 max_time = event['time_sec'].iloc[max_idx]
                 severity = np.abs(grad2[max_idx])
 
-                # compute the pre-slip area (displacement integral up to peak)
+                # Compute the pre-slip area (displacement integral up to peak)
                 closest_idx = (np.abs(event['time_sec'] - max_time)).idxmin()
                 x_segment = event['time_sec'].iloc[:closest_idx + 1].values
                 y_segment = event[f'{self.name}{var}'].iloc[:closest_idx + 1].values
@@ -119,7 +121,7 @@ class Station:
 
                 slip_sizes.append(integral)
                 
-        return sum(slip_sizes) / len(slip_sizes)
+        return sum(slip_sizes) / len(slip_sizes), statistics.stdev(slip_sizes)
     
     def calc_avg_sv(self, var = 'x'):
         """
@@ -147,7 +149,7 @@ class Station:
 
                 impulsive_list.append(severity)
 
-        return sum(impulsive_list) / len(impulsive_list)
+        return sum(impulsive_list) / len(impulsive_list), statistics.stdev(impulsive_list)
                 
         
         
@@ -158,7 +160,7 @@ class Station:
                 disp = event.iloc[-1][f'{self.name}{var}']
                 displacements.append(disp)
 
-        return sum(displacements) / len(displacements)
+        return sum(displacements) / len(displacements), statistics.stdev(impulsive_list)
 
         
     def plot_station(self, var='x'):
@@ -191,7 +193,7 @@ class Station:
     
        
       
-    #### NOTE: This will only work for stations past or near grouding line
+    #### NOTE: This will only work for stations past or near grounding line
     def get_tide_data(self, var='x', days=30, spacing=10, plot=False):
             
         x_col = f"{self.name}x"
@@ -240,6 +242,7 @@ class Station:
         
 
 
+        
 
 
 
