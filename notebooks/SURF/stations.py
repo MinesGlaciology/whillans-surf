@@ -16,12 +16,11 @@ import my_lib.funcs
 
 class Station:
     
-    def __init__(self, name, evts_path, year):
+    def __init__(self, name, evts_path):
         self.name = name
         self.chars = name[0:2]
         self.num = name[2:4]
         self.evts_path = evts_path
-        self.year = year
 
         self.data = self.preprocess()
 
@@ -30,8 +29,9 @@ class Station:
         self.slip_severity, self.slip_severity_sd = self.calc_avg_sv()
 
         self.slip_size, self.slip_size_sd = self.calc_avg_sz()
-        
-        self.tide_dat = self.get_tide_data()
+
+        # Commenting this out for time reasons for now
+        # self.tide_dat = self.get_tide_data()
       
         
     def preprocess(self):
@@ -40,12 +40,21 @@ class Station:
 
         Returns
         -------
-        A list of DataFrames with columns for x, y, z, and displacements standardized. If the station is not operational for event, returns empty DF with column 
+        A list of DataFrames with columns for x, y, z, and displacements standardized. 
+        If the station is not operational for event, returns empty DF with column 
         'no_event'
         
         """
+
         
-        raw_events = my_lib.funcs.load_evt(self.evts_path)
+        raw_events = []
+
+        if isinstance(self.evts_path, str):
+            raw_events = my_lib.funcs.load_evt(self.evts_path)
+        else:
+            for path in self.evts_path:
+                
+                raw_events += my_lib.funcs.load_evt(path)
 
         # now we can preprocess
         processed_events = []
@@ -160,7 +169,7 @@ class Station:
                 disp = event.iloc[-1][f'{self.name}{var}']
                 displacements.append(disp)
 
-        return sum(displacements) / len(displacements), statistics.stdev(impulsive_list)
+        return sum(displacements) / len(displacements), statistics.stdev(displacements)
 
         
     def plot_station(self, var='x'):

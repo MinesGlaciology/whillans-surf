@@ -1,0 +1,3 @@
+Ideas:
+
+There is an obvious difference in low tide vs high tide events. Creating a neural net that has conditional logic in its architecture could be very useful.

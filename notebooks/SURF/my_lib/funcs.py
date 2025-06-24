@@ -314,3 +314,116 @@ def get_tide_height(days, x_cor, y_cor, start_time):
 
     return out
     
+
+def tide_derivative(tide_df):
+    """
+    Calculates the derivative of a tide dataset
+
+    Parameters
+    ----------
+    tide_df: pd.DataFrame
+        DataFrame with two columns = ['time', 'tide_height']
+
+    returns: pd.DataFrame
+        columns = ['time', 'tide_derivative'] 
+        1st derivative will be in units of cm/minute
+
+    NOTE: Time should increment by minutes
+    """
+    
+    # Retrieve our "f" values
+    f = tide_df['tide_height'].to_numpy()
+
+    # Paramter 1 signifies there is one minute between tide measurements
+    # Since equal distances, this is a standard 2nd-order approx. under the hood.
+    deriv = np.gradient(f, 1) 
+
+    # Define our output df
+    out = pd.DataFrame(columns = ['time', 'tide_deriv'])
+    out['time'] = tide_df['time']
+
+    out['tide_deriv'] = pd.Series(deriv)
+
+    return out
+
+
+def form_factor_calc(tide_time, days = 3, slide = 1):
+    """
+    Calculates form factor for tide data
+
+    Parameters
+    ----------
+    tide_time: pd.DataFrame
+        columns = ['time', 'tide_height']
+
+    days: int
+        number of days to perform tide calculation on
+
+    slide: int
+        calculation parameter
+
+    Returns
+    -------
+    out: DataFrame
+        columns = ['date', 'form_factors']
+    """
+    reference_time = tide_time['time'].iloc[0]
+    seconds = [(date - reference_time).total_seconds() for date in tide_time['time']]
+    
+    # print(tide_time['tide_height'].shape, tide_time['time'].shape)
+    
+    tide = tide_time['tide_height']
+    dates_timeseries = tide_time['time']
+    
+    spacing = 4  # Minutes
+    mean_days = days
+    slide_days = slide
+    mean_units = int(mean_days * 24 * 60 / spacing)
+    slide_units = int(slide_days * 24 * 60 / spacing)
+    
+    HR_TO_SEC = 3600
+    T_O1 = 25.81933871 * HR_TO_SEC
+    T_K1 = 23.93447213 * HR_TO_SEC
+    T_M2 = 12.4206012 * HR_TO_SEC
+    T_S2 = 12 * HR_TO_SEC
+    
+    def sines(x, A1, phi1, A2, phi2):
+        return A1 * np.sin(2 * np.pi * x / ((T_O1 + T_K1) / 2) + phi1) + A2 * np.sin(
+            2 * np.pi * x / ((T_M2 + T_S2) / 2) + phi2
+        )
+    
+    form_factors = []
+    dates_form_factor = []
+    semidiurnal = []
+    diurnal = []
+    
+    start = 0
+    end = mean_units
+    while end < len(seconds):
+        seconds_tide = np.array(seconds[start:end], dtype=float)
+        tide_window = np.array(tide[start:end], dtype=float)
+        date_midpoint = dates_timeseries[(start + end) // 2]
+        start += slide_units
+        end += slide_units
+    
+        # Fit a sum of sines to the tide
+        initial_guess = [50, 0, 50, 0]
+        popt, pcov = scipy.optimize.curve_fit(sines, seconds_tide, tide_window, p0=initial_guess)
+    
+        # Extract fitted parameters
+        Diurnal_fit, phi1_fit, SemiDiurnal_fit, phi2_fit = popt
+    
+        # Generate the fitted curve
+        y_fit = sines(seconds_tide, Diurnal_fit, phi1_fit, SemiDiurnal_fit, phi2_fit)
+        form_factor = np.abs(Diurnal_fit / SemiDiurnal_fit)
+        semidiurnal.append((SemiDiurnal_fit))
+        diurnal.append((Diurnal_fit))
+    
+        form_factors.append(form_factor)
+        dates_form_factor.append(date_midpoint)
+
+    # DataFrame to return
+    out = pd.DataFrame(columns = ['dates', 'form_factors'])
+    out['dates'] = dates_form_factor
+    out['form_factors'] = form_factors
+    return out
