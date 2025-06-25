@@ -273,7 +273,7 @@ def get_tide_height(days, x_cor, y_cor, start_time):
     """
 
     ### USER DEFINED PATH TO TIDE MODEL ###
-    tide_dir = "/Users/sambrown04/Documents/SURF"
+    tide_dir = "/Users/sambrown/Documents/SURF"
     #######################################
     
     tide_mod = "CATS2008-v2023"
