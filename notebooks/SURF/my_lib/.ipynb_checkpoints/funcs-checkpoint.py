@@ -273,7 +273,7 @@ def get_tide_height(days, x_cor, y_cor, start_time):
     """
 
     ### USER DEFINED PATH TO TIDE MODEL ###
-    tide_dir = "/Users/sambrown/Documents/SURF"
+    tide_dir = "/Users/sambrown04/Documents/SURF"
     #######################################
     
     tide_mod = "CATS2008-v2023"
@@ -427,3 +427,80 @@ def form_factor_calc(tide_time, days = 3, slide = 1):
     out['dates'] = dates_form_factor
     out['form_factors'] = form_factors
     return out
+
+def form_factor_window(tide_time, start_time, duration_minutes = 720):
+    """
+    Calculates form factor over a single time window (and other features)
+
+    Parameters
+    ----------
+    tide_time: pd.DataFrame
+        columns = ['time', 'tide_height']
+    
+    start_time: datetime
+        Start time of the interval to analyze
+
+    duration_minutes: float
+        Duration of the interval in minutes (720 for 12 hours)
+
+    Returns
+    -------
+    result: list
+        [
+            form_factor: float,
+            diurnal_amplitude: float,
+            semidiurnal_amplitude: float,
+            diurnal_phase: float,
+            semidiurnal_phase: float
+        ]
+    
+    """
+
+    #Constants
+    HR_TO_SEC = 3600
+    T_O1 = 25.81933871 * HR_TO_SEC
+    T_K1 = 23.93447213 * HR_TO_SEC
+    T_M2 = 12.4206012 * HR_TO_SEC
+    T_S2 = 12 * HR_TO_SEC
+
+    # Define function to fit
+    def sines(x, A1, phi1, A2, phi2):
+        return A1 * np.sin(2 * np.pi * x / ((T_O1 + T_K1) / 2) + phi1) + A2 * np.sin(
+            2 * np.pi * x / ((T_M2 + T_S2) / 2) + phi2
+        )
+
+    # Define window we will be using
+    end_time = start_time + pd.Timedelta(minutes=duration_minutes)
+    window = tide_time[(tide_time['time'] >= start_time) & (tide_time['time'] <= end_time)].copy()
+
+    
+    reference_time = window['time'].iloc[0]
+
+    # Convert each timestamp to a number for fitting
+    seconds = np.array([(t - reference_time).total_seconds() for t in window['time']])
+
+    #Extract for faster math operations
+    tide_heights = window['tide_height'].to_numpy()
+
+    initial_guess = [50, 0, 50, 0]
+
+    popt, pcov = scipy.optimize.curve_fit(sines, seconds, tide_heights, p0=initial_guess)
+    
+    A1, phi1, A2, phi2 = popt
+
+    form_factor = abs(A1 / A2)
+
+    return [form_factor, A1, A2, phi1, phi2]
+
+
+    
+
+
+
+
+
+
+
+
+
+
