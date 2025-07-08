@@ -21,8 +21,8 @@ class Station:
         self.chars = name[0:2]
         self.num = name[2:4]
         self.evts_path = evts_path
-
-        self.data = self.preprocess()
+        
+        self.xcor, self.ycor, self.data = self.preprocess()
 
         self.pre_slip_a, self.pre_slip_a_sd = self.calc_area()
     
@@ -30,7 +30,7 @@ class Station:
 
         self.slip_size, self.slip_size_sd = self.calc_avg_sz()
 
-        # Commenting this out for time reasons for now
+        # Commenting this out for runtime reasons for now
         # self.tide_dat = self.get_tide_data()
       
         
@@ -40,6 +40,8 @@ class Station:
 
         Returns
         -------
+        Average x and y coordinates for the entire time that the station had been transmitting [avg_x, avg_y]
+        
         A list of DataFrames with columns for x, y, z, and displacements standardized. 
         If the station is not operational for event, returns empty DF with column 
         'no_event'
@@ -49,15 +51,19 @@ class Station:
         
         raw_events = []
 
+        # Conditions for length of data being processed (one year vs multiple years)
         if isinstance(self.evts_path, str):
             raw_events = my_lib.funcs.load_evt(self.evts_path)
         else:
-            for path in self.evts_path:
-                
+            for path in self.evts_path:        
                 raw_events += my_lib.funcs.load_evt(path)
 
         # now we can preprocess
         processed_events = []
+
+        # Lists for the x and y coordinates
+        x_cors = []
+        y_cors = []
         
         # loop through full raw data, want only station columns
         for event in raw_events:
@@ -68,7 +74,6 @@ class Station:
             event_clean['time_dt'] = pd.to_datetime(event_clean['time'], format='%Y-%m-%d %H:%M:%S')
             event_clean['time_sec'] = (event_clean['time_dt'] - event_clean['time_dt'].iloc[0]).dt.total_seconds()
 
-            
             # Build expected column names
             x_col = f'{self.name}x'
             y_col = f'{self.name}y'
@@ -77,7 +82,10 @@ class Station:
             # Check if all required columns exist and contain data
             if all(col in event_clean.columns for col in [x_col, y_col, z_col]):
                 if not (event_clean[x_col].isna().any() or event_clean[y_col].isna().any() or event_clean[z_col].isna().any()):
-                    
+                    # Store the x and y coordinates
+                    x_cors.append(event_clean[x_col].iloc[0])
+                    y_cors.append(event_clean[y_col].iloc[0])
+                        
                     # Subtract initial value (normalize) and keep columns
                     event_clean[x_col] = abs(event_clean[x_col] - event_clean[x_col].iloc[0])
                     event_clean[y_col] = abs(event_clean[y_col] - event_clean[y_col].iloc[0])
@@ -89,8 +97,11 @@ class Station:
                     processed_events.append(pd.DataFrame(columns=['no_event']))
             else:
                 processed_events.append(pd.DataFrame(columns=['no_event']))
-    
-        return processed_events
+
+        avg_xcor = sum(x_cors) / len(x_cors)
+        avg_ycor = sum(y_cors) / len(y_cors)
+
+        return avg_xcor, avg_ycor, processed_events
 
         
             
