@@ -86,6 +86,7 @@ def derivative(x_col, order=4, crit=.05, spacing=15):
 
     #1st deriv
     b, a = scipy.signal.butter(order, crit) # butterworth filter 
+        
     filtered = scipy.signal.filtfilt(b, a, y, padlen=50) # applies filter, no phase shift
     grad = np.gradient(filtered, spacing) # computes gradient
     return grad
