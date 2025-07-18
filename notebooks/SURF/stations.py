@@ -213,7 +213,7 @@ class Station:
     
        
       
-    #### NOTE: This will only work for stations past or near grounding line
+    #### NOTE: This will only work for stations past or near the grounding line ####
     def get_tide_data(self, var='x', days=30, spacing=10, plot=False):
             
         x_col = f"{self.name}x"
