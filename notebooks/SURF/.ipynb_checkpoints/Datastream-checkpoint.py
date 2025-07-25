@@ -48,12 +48,19 @@ class Datastream:
             Multi-day data frame
         """
 
+        print(f"Checking folders in: {self.sta}")
+        for folder in os.scandir(os.fspath(self.sta)):
+            print("  Found folder:", folder.name)
+
+        print("Looking for years:", years)
+        
         data = pd.DataFrame()
         for year in years:
             for folder in os.scandir(os.fspath(self.sta)):
                 # Folder is an os.DirEntry object
                 if folder.is_dir():
-                    if folder.name == year:
+                    if folder.name.strip() == year:
+                        print(f"Matched year {year} in folder {folder.name} for station {self.name}")
                         for gps in sorted(os.listdir(folder.path)):
                             # Ignore xyzt, zip files
                             if gps.endswith(".pos") and not gps.startswith("."):
