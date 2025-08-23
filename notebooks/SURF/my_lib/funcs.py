@@ -188,8 +188,7 @@ def plot_event(event: pd.DataFrame, separated=False, var="x") -> None:
         return (col - mean_val) - (col.iloc[0] - mean_val)
 
     #Return columns ending in the given suffix with any non-NaN values 
-    def valid_plot_cols(df, suffix):
-        
+    def valid_plot_cols(df, suffix):    
         return [col for col in df.columns if str(col).endswith(suffix) and df[col].notna().any()]
 
     times = pd.to_datetime(event["time"])
@@ -295,7 +294,6 @@ def get_tide_height(days, x_cor, y_cor, start_time):
     lon, lat = util.coordinate_transforms.xy2ll(x_cor, y_cor)
     # print(lon, lat)
 
-    
     tides = Tides.Tide(tide_mod, tide_dir)
     
     start_time = time.time()
@@ -308,7 +306,6 @@ def get_tide_height(days, x_cor, y_cor, start_time):
     elapsed_time = end_time - start_time
     print(f"Elapsed time: {elapsed_time} seconds")
 
-    
     out = pd.DataFrame(columns = ["time", "tide_height"])
     out.loc[:,"time"] = dates_timeseries
     out.loc[:,"tide_height"] = tide_results
@@ -474,7 +471,6 @@ def form_factor_window(tide_time, start_time, duration_minutes = 720):
     end_time = start_time + pd.Timedelta(minutes=duration_minutes)
     window = tide_time[(tide_time['time'] >= start_time) & (tide_time['time'] <= end_time)].copy()
 
-    
     reference_time = window['time'].iloc[0]
 
     # Convert each timestamp to a number for fitting

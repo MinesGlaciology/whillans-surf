@@ -51,14 +51,13 @@ class Station:
         
         raw_events = []
 
-        # Conditions for length of data being processed (one year vs multiple years)
+        # Conditions for the length of data being processed (one year vs multiple years)
         if isinstance(self.evts_path, str):
             raw_events = my_lib.funcs.load_evt(self.evts_path)
         else:
             for path in self.evts_path:        
                 raw_events += my_lib.funcs.load_evt(path)
 
-        # now we can preprocess
         processed_events = []
 
         # Lists for the x and y coordinates
@@ -82,6 +81,7 @@ class Station:
             # Check if all required columns exist and contain data
             if all(col in event_clean.columns for col in [x_col, y_col, z_col]):
                 if not (event_clean[x_col].isna().any() or event_clean[y_col].isna().any() or event_clean[z_col].isna().any()):
+                    
                     # Store the x and y coordinates
                     x_cors.append(event_clean[x_col].iloc[0])
                     y_cors.append(event_clean[y_col].iloc[0])
@@ -120,7 +120,6 @@ class Station:
 
         """
 
-        
         slip_sizes = []
         
         for event in self.data:
@@ -157,13 +156,15 @@ class Station:
         Average impulsiveness: float
         """
 
-        
         impulsive_list = []
         for event in self.data:
             if not 'no_event' in event.columns:
+                
+                # Derivatives
                 grad = my_lib.funcs.derivative(event[f'{self.name}{var}'])
                 grad2 = my_lib.funcs.derivative(grad)
 
+                # Calculation
                 max_idx = np.argmax(np.abs(grad2))
                 severity = np.abs(grad2[max_idx])
 
@@ -206,13 +207,10 @@ class Station:
     
         plt.xlabel("Time (sec)")
         plt.ylabel(f"{self.name}{var}")
-        plt.title(f"{self.name} - {var.upper()} Axis - All Events and Average")
+        plt.title(f"{self.name} - {var.upper()} Axis, All Events and Average")
         plt.legend()
         plt.show()   
             
-    
-       
-      
     #### NOTE: This will only work for stations past or near the grounding line ####
     def get_tide_data(self, var='x', days=30, spacing=10, plot=False):
             
