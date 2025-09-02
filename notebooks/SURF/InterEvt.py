@@ -1,4 +1,6 @@
-# inter event stations
+# Sam Brown
+# sam_brown@mines.edu
+# Class for effective standardization of inter-event GPS displacement features.
 
 from sklearn.linear_model import LinearRegression
 import numpy as np
@@ -16,6 +18,7 @@ class InterEvt:
     def get_disp_stats(self):
         disps = []
         for event in self.data:
+            # X- direction
             col = f"{self.name}_x"
             if col in event and not event[col].isna().any():
                 disp = event.iloc[-1][col] - event.iloc[0][col]
@@ -33,6 +36,7 @@ class InterEvt:
                 X = np.array(event.index).reshape(-1, 1)
                 y = event[col].values.reshape(-1, 1)
 
+                # Slope and R2 for regression fit on displacement dat between evts
                 reg = LinearRegression().fit(X, y)
                 slopes.append(reg.coef_[0][0])
                 r2s.append(reg.score(X, y))
