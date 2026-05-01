@@ -1,3 +1,3 @@
 # Whillans SURF
 
-Repository to investegate Whillans Ice Plain slip events.
+Repository to investigate Whillans Ice Plain slip events.
